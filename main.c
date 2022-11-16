@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 			bon_commande_miels();
 		else
 		{
-			printf(PRINTF_RED "[ERREUR]" PRINTF_RESET "%c, n'est pas une commande valide, les commandes valides sont: 'O' (oui), 'N'(non) et 'Q' (quitter)\n", commande_type);
+			printf(PRINTF_RED "[ERREUR]" PRINTF_RESET " '%c', n'est pas une commande valide, les commandes valides sont: 'O' (oui), 'N'(non) et 'Q' (quitter)\n", commande_type);
 		}
 	}
 
@@ -80,22 +80,20 @@ void bon_commande_miels(void)
 
 	FILE *f = fopen(MIELS_AMANDES_FILE, "a");
 
-	// nom + prenom du client
-	char prenom[64 + 1] = {0};
+	// nom du client
 	char nom[64 + 1] = {0};
 	do
 	{
 		printf("nom : ");
-		scanf("%64[^ ^\n]", prenom);
 		scanf("%64[^\n]", nom);
 		fflush(stdin);
-		if (prenom[0] == 0 || nom[0] == 0)
-			printf(PRINTF_RED "[ERREUR]" PRINTF_RESET "Il faut fournir un prenom et un nom pour le client.\n");
-	} while (prenom[0] == 0 || nom[0] == 0);
+		if (nom[0] == 0)
+			printf(PRINTF_RED "[ERREUR]" PRINTF_RESET " Il faut fournir un nom pour le client.\n");
+	} while (nom[0] == 0);
 
 	// printf("le client s'appelle %s %s\n", prenom, nom);
 
-	fprintf(f, "|%32s%-32s|  ", prenom, nom);
+	fprintf(f, "|%-64s|  ", nom);
 
 	// numero de telephone du client
 	char tel[15] = {0};
@@ -104,7 +102,7 @@ void bon_commande_miels(void)
 	fflush(stdin);
 
 	if (tel[0] == 0)
-		printf(PRINTF_YELLOW "[INFO]" PRINTF_RESET "pas de numero de telephone\n");
+		printf(PRINTF_YELLOW "[INFO]" PRINTF_RESET " pas de numero de telephone\n");
 	// else
 	//     printf("le numero de telephone du client est : %s\n", tel);
 
@@ -117,7 +115,7 @@ void bon_commande_miels(void)
 	fflush(stdin);
 
 	if (mail[0] == 0)
-		printf(PRINTF_YELLOW "[INFO]" PRINTF_RESET "pas d'e-mail\n");
+		printf(PRINTF_YELLOW "[INFO]" PRINTF_RESET " pas d'e-mail\n");
 	// else
 	//     printf("l'e-mail du client est %s\n", mail);
 
@@ -160,22 +158,20 @@ void bon_commande_fruits(void)
 
 	FILE *f = fopen(FRUITS_FILE, "a");
 
-	// nom + prenom du client
-	char prenom[64 + 1] = {0};
+	// nomdu client
 	char nom[64 + 1] = {0};
 	do
 	{
 		printf("nom : ");
-		scanf("%64[^ ^\n]", prenom);
 		scanf("%64[^\n]", nom);
 		fflush(stdin);
-		if (prenom[0] == 0 || nom[0] == 0)
-			printf(PRINTF_RED "[ERREUR]" PRINTF_RESET "Il faut fournir un prenom et un nom pour le client.\n");
-	} while (prenom[0] == 0 || nom[0] == 0);
+		if (nom[0] == 0)
+			printf(PRINTF_RED "[ERREUR]" PRINTF_RESET " Il faut fournir un nom pour le client.\n");
+	} while (nom[0] == 0);
 
 	// printf("le client s'appelle %s %s\n", prenom, nom);
 
-	fprintf(f, "|%32s%-32s|  ", prenom, nom);
+	fprintf(f, "|%-64s|  ", nom);
 
 	// numero de telephone du client
 	char tel[15] = {0};
@@ -184,7 +180,7 @@ void bon_commande_fruits(void)
 	fflush(stdin);
 
 	if (tel[0] == 0)
-		printf(PRINTF_YELLOW "[INFO]" PRINTF_RESET "pas de numero de telephone\n");
+		printf(PRINTF_YELLOW "[INFO]" PRINTF_RESET " pas de numero de telephone\n");
 	// else
 	//     printf("le numero de telephone du client est : %s\n", tel);
 
@@ -197,7 +193,7 @@ void bon_commande_fruits(void)
 	fflush(stdin);
 
 	if (mail[0] == 0)
-		printf(PRINTF_YELLOW "[INFO]" PRINTF_RESET "pas d'e-mail\n");
+		printf(PRINTF_YELLOW "[INFO]" PRINTF_RESET " pas d'e-mail\n");
 	// else
 	//     printf("l'e-mail du client est %s\n", mail);
 
