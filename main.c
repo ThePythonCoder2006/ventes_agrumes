@@ -34,20 +34,31 @@ int main(int argc, char **argv)
 {
     --argc, ++argv;
 
-    printf("commande de fruits ? ([O] (oui) / N (non)");
-    char commande_type;
-    scanf("%c", &commande_type);
-    fflush(stdin);
+    uint8_t run = 1;
 
-    commande_type = toupper(commande_type);
+    while (run)
+    {
+        printf("commande d'agrummes ? ([O] (oui) / N (non)");
+        char commande_type;
+        scanf("%c", &commande_type);
+        fflush(stdin);
 
-    if (commande_type == 'O' || commande_type == '\n')
-    {
-        bon_commande_fruits();
-    }
-    else if (commande_type == 'N')
-    {
-        bon_commande_miels();
+        commande_type = toupper(commande_type);
+
+        if (commande_type == 'Q')
+        {
+            run = 0;
+            continue;
+        }
+
+        if (commande_type == 'O' || commande_type == '\n')
+            bon_commande_fruits();
+        else if (commande_type == 'N')
+            bon_commande_miels();
+        else
+        {
+            printf("%c, n'est pas une commande valide, les commandes valides sont: 'O' (oui), 'N'(non) et 'Q' (quitter)\n", commande_type);
+        }
     }
 
     return EXIT_SUCCESS;
@@ -72,7 +83,7 @@ void bon_commande_miels(void)
             printf("Il faut fournir un prenom et un nom pour le client.\n");
     } while (prenom[0] == 0 || nom[0] == 0);
 
-    printf("le client s'appelle %s %s\n", prenom, nom);
+    // printf("le client s'appelle %s %s\n", prenom, nom);
 
     fprintf(f, "|%32s%-32s|  ", prenom, nom);
 
@@ -84,8 +95,8 @@ void bon_commande_miels(void)
 
     if (tel[0] == 0)
         printf("pas de numero de telephone\n");
-    else
-        printf("le numero de telephone du client est : %s\n", tel);
+    // else
+    //     printf("le numero de telephone du client est : %s\n", tel);
 
     fprintf(f, "%14s", tel);
 
@@ -97,32 +108,36 @@ void bon_commande_miels(void)
 
     if (mail[0] == 0)
         printf("pas d'e-mail\n");
-    else
-        printf("l'e-mail du client est %s\n", mail);
+    // else
+    //     printf("l'e-mail du client est %s\n", mail);
 
-    char tmp;
+    char tmp = 0;
 
-    uint32_t amandes;
+    uint32_t tmp2 = 0;
     printf("amandes : ");
     if (scanf("%1[\n]", &tmp) == 0)
-        scanf("%u", &amandes);
+        scanf("%u", &tmp2);
     fflush(stdin);
+    uint32_t amandes = tmp2;
 
-    uint32_t miel_orange;
-    printf("miel orange : ");
+    printf("miel oranger : ");
     if (scanf("%1[\n]", &tmp) == 0)
-        scanf("%u", &miel_orange);
+        scanf("%u", &tmp2);
     fflush(stdin);
+    uint32_t miel_orange = tmp2;
 
-    uint32_t miel_citron;
-    printf("miel citron : ");
+    printf("miel citronnier : ");
     if (scanf("%1[\n]", &tmp) == 0)
-        scanf("%u", &miel_citron);
+        scanf("%u", &tmp2);
     fflush(stdin);
+    uint32_t miel_citron = tmp2;
 
     uint32_t tot_prix = miel_citron * prix_miel_citron + miel_orange * prix_miel_orange + amandes * prix_amandes;
 
-    printf("le client doit payer %.1f", (double)tot_prix / 10);
+    printf("le client doit payer %.1f\n", (double)tot_prix / 10);
+
+    fprintf(f, "  |  %-62s|%12u|%12u|%12u|%12.1f|\n", mail, amandes, miel_orange, miel_citron, (double)tot_prix / 10);
+    fprintf(f, "|----------------------------------------------------------------|------------------|----------------------------------------------------------------|------------|------------|------------|------------|\n");
 
     fclose(f);
 
@@ -148,7 +163,7 @@ void bon_commande_fruits(void)
             printf("Il faut fournir un prenom et un nom pour le client.\n");
     } while (prenom[0] == 0 || nom[0] == 0);
 
-    printf("le client s'appelle %s %s\n", prenom, nom);
+    // printf("le client s'appelle %s %s\n", prenom, nom);
 
     fprintf(f, "|%32s%-32s|  ", prenom, nom);
 
@@ -160,8 +175,8 @@ void bon_commande_fruits(void)
 
     if (tel[0] == 0)
         printf("pas de numero de telephone\n");
-    else
-        printf("le numero de telephone du client est : %s\n", tel);
+    // else
+    //     printf("le numero de telephone du client est : %s\n", tel);
 
     fprintf(f, "%14s", tel);
 
@@ -173,8 +188,8 @@ void bon_commande_fruits(void)
 
     if (mail[0] == 0)
         printf("pas d'e-mail\n");
-    else
-        printf("l'e-mail du client est %s\n", mail);
+    // else
+    //     printf("l'e-mail du client est %s\n", mail);
 
     // prise de la commande en cagettes
     uint32_t commande[NB_TYPE_CAGETTES] = {0};
