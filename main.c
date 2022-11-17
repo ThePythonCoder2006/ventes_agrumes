@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include <locale.h>
+#include <wchar.h>
 
 #define FRUITS_FILE "commande_fruits.txt"
 #define MIELS_AMANDES_FILE "commande_miels_amandes.txt"
@@ -27,12 +29,23 @@ const uint32_t prix_miel_orange = 115;
 const uint32_t prix_miel_citron = 115;
 const uint32_t prix_amandes = 125;
 
+static uint32_t svd_tot_agrumes = 0;
+static uint32_t svd_fruits[NB_TYPE_CAGETTES];
+
+static uint32_t svd_tot_miels;
+static uint32_t svd_amandes;
+static uint32_t svd_miel_orange;
+static uint32_t svd_miel_citron;
+
 void bon_commande_miels(void);
 void bon_commande_fruits(void);
+void stats(void);
 
 int main(int argc, char **argv)
 {
 	--argc, ++argv;
+
+	setlocale(LC_ALL, "C.UTF-8");
 
 	uint8_t run = 1;
 
@@ -55,9 +68,11 @@ int main(int argc, char **argv)
 			bon_commande_fruits();
 		else if (commande_type == 'N')
 			bon_commande_miels();
+		else if (commande_type == 'S')
+			stats();
 		else
 		{
-			printf("'%c', n'est pas une commande valide, les commandes valides sont: 'O' (oui), 'N'(non) et 'Q' (quitter)\n", commande_type);
+			printf("'%c', n'est pas une commande valide, les commandes valides sont: 'O' (oui), 'N'(non), 'S' (statistiques) et 'Q' (quitter)\n", commande_type);
 		}
 	}
 
@@ -150,11 +165,6 @@ void bon_commande_miels(void)
 
 	fclose(f);
 
-	uint32_t svd_miel_orange = 0;
-	uint32_t svd_miel_citron = 0;
-	uint32_t svd_amandes = 0;
-	uint32_t svd_tot = 0;
-
 	f = fopen("values_miels_amandes.bin", "r");
 
 	if (f != NULL)
@@ -162,7 +172,7 @@ void bon_commande_miels(void)
 		fread(&svd_amandes, sizeof(svd_amandes), 1, f);
 		fread(&svd_miel_orange, sizeof(svd_miel_orange), 1, f);
 		fread(&svd_miel_citron, sizeof(svd_miel_citron), 1, f);
-		fread(&svd_tot, sizeof(svd_tot), 1, f);
+		fread(&svd_tot_miels, sizeof(svd_tot_miels), 1, f);
 	}
 
 	fclose(f);
@@ -170,18 +180,18 @@ void bon_commande_miels(void)
 	svd_amandes += amandes;
 	svd_miel_orange += miel_orange;
 	svd_miel_citron += miel_citron;
-	svd_tot += tot_prix;
+	svd_tot_miels += tot_prix;
 
 	f = fopen("values_miels_amandes.bin", "w");
 
 	fwrite(&svd_amandes, sizeof(svd_amandes), 1, f);
 	fwrite(&svd_miel_orange, sizeof(svd_miel_orange), 1, f);
 	fwrite(&svd_miel_citron, sizeof(svd_miel_citron), 1, f);
-	fwrite(&svd_tot, sizeof(svd_tot), 1, f);
+	fwrite(&svd_tot_miels, sizeof(svd_tot_miels), 1, f);
 
 	fclose(f);
 
-	printf("%u, %u, %u, %u\n", svd_amandes, svd_miel_orange, svd_miel_citron, svd_tot);
+	printf("%u, %u, %u, %u\n", svd_amandes, svd_miel_orange, svd_miel_citron, svd_tot_miels);
 
 	return;
 }
@@ -308,35 +318,81 @@ void bon_commande_fruits(void)
 
 	// savging the totals
 
-	uint32_t svd_fruits[NB_TYPE_CAGETTES] = {0};
-	uint32_t svd_tot = 0;
-
 	f = fopen("values_agrumes.bin", "r");
 
 	if (f != NULL)
 		for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
 			fread(&(svd_fruits[i]), sizeof(svd_fruits[i]), 1, f);
 
-	fread(&svd_tot, sizeof(svd_tot), 1, f);
+	fread(&svd_tot_agrumes, sizeof(svd_tot_agrumes), 1, f);
 
 	fclose(f);
 
 	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
 		svd_fruits[i] += commande[i];
 
-	svd_tot += tot_prix;
+	svd_tot_agrumes += tot_prix;
 
 	f = fopen("values_agrumes.bin", "w");
 
 	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
 		fwrite(&(svd_fruits[i]), sizeof(svd_fruits[i]), 1, f);
-	fwrite(&svd_tot, sizeof(svd_tot), 1, f);
+	fwrite(&svd_tot_agrumes, sizeof(svd_tot_agrumes), 1, f);
 
 	fclose(f);
 
 	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
 		printf("%u, ", svd_fruits[i]);
 	printf("%u\n", tot_prix);
+
+	return;
+}
+
+void stats(void)
+{
+	printf("STATISTIQUES : \n");
+
+	printf("Ventes de miels et d'amandes : \n");
+	printf("|-------------------------------------------------------------------------------|\n");
+	printf("|                    | amandes | miel d'oranger | miel de citronnier | total    |\n");
+	printf("|--------------------|---------|----------------|--------------------|----------|\n");
+	printf("| prix unitaire      |%-9.1f|%-16.1f|%-20.1f|          |\n", (double)prix_amandes / 10, (double)prix_miel_orange / 10, (double)prix_miel_citron / 10);
+	printf("|--------------------|---------|----------------|--------------------|----------|\n");
+	printf("|total achats (x500g)|%-9u|%-16u|%-20u|%-10u|\n", svd_amandes, svd_miel_orange, svd_miel_citron, svd_amandes + svd_miel_orange + svd_miel_citron);
+	printf("|--------------------|---------|----------------|--------------------|----------|\n");
+	printf("|total ventes        |%-9.1f|%-16.1f|%-20.1f|%-10.1f|\n", (double)(prix_amandes * svd_amandes) / 10, (double)(prix_miel_orange * svd_miel_orange) / 10,
+				 (double)(prix_miel_citron * svd_miel_citron) / 10, (double)((prix_amandes * svd_amandes) + (prix_miel_orange * svd_miel_orange) + (prix_miel_citron * svd_miel_citron)) / 10);
+	printf("|-------------------------------------------------------------------------------|\n");
+
+	const uint8_t width[NB_TYPE_CAGETTES] = {9, 12, 15, 9, 23, 26, 20, 23};
+
+	printf("\n\nVentes d'agrumes : \n");
+	printf("|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n");
+	printf("|                    | oranges | mandarines | pamplemousses | citrons | oranges et mandarines | oranges et pamplemousses | oranges et citrons | mandarines et citrons | total |\n");
+	printf("|--------------------|---------|------------|---------------|---------|-----------------------|--------------------------|--------------------|-----------------------|-------|\n");
+	printf("|prix unitaires      |");
+	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
+		printf("%-*.1f|", width[i], (double)prix[i] / 10);
+	printf("       |\n");
+	printf("|--------------------|---------|------------|---------------|---------|-----------------------|--------------------------|--------------------|-----------------------|-------|\n");
+	printf("|total achats (x10kg)|");
+	uint32_t tot = 0;
+	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
+	{
+		printf("%-*u|", width[i], svd_fruits[i]);
+		tot += svd_fruits[i];
+	}
+	printf("%-7u|\n", tot);
+	printf("|--------------------|---------|------------|---------------|---------|-----------------------|--------------------------|--------------------|-----------------------|-------|\n");
+	printf("|total ventes        |");
+	tot = 0;
+	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
+	{
+		printf("%-*.1f|", width[i], (double)(prix[i] * svd_fruits[i]) / 10);
+		tot += prix[i] * svd_fruits[i];
+	}
+	printf("%-7.1f|\n", (double)tot / 10);
+	printf("|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n");
 
 	return;
 }
