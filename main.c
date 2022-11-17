@@ -9,6 +9,51 @@
 
 #define FRUITS_FILE "commande_fruits.txt"
 #define MIELS_AMANDES_FILE "commande_miels_amandes.txt"
+#define VALUES_AGRUMES_FILE "values_agrumes.bin"
+#define VALUES_MIELS_FILE "values_miels_amandes.bin"
+
+#define MIELS_AMANDES_READ_DATA                             \
+	f = fopen(VALUES_MIELS_FILE, "r");                        \
+                                                            \
+	if (f != NULL)                                            \
+	{                                                         \
+		fread(&svd_amandes, sizeof(svd_amandes), 1, f);         \
+		fread(&svd_miel_orange, sizeof(svd_miel_orange), 1, f); \
+		fread(&svd_miel_citron, sizeof(svd_miel_citron), 1, f); \
+		fread(&svd_tot_miels, sizeof(svd_tot_miels), 1, f);     \
+	}                                                         \
+                                                            \
+	fclose(f);
+
+#define MIELS_AMANDES_SAVE_DATA                            \
+	f = fopen(VALUES_MIELS_FILE, "w");                       \
+                                                           \
+	fwrite(&svd_amandes, sizeof(svd_amandes), 1, f);         \
+	fwrite(&svd_miel_orange, sizeof(svd_miel_orange), 1, f); \
+	fwrite(&svd_miel_citron, sizeof(svd_miel_citron), 1, f); \
+	fwrite(&svd_tot_miels, sizeof(svd_tot_miels), 1, f);     \
+                                                           \
+	fclose(f);
+
+#define AGRUMES_READ_DATA                                   \
+	f = fopen(VALUES_AGRUMES_FILE, "r");                      \
+                                                            \
+	if (f != NULL)                                            \
+		for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)          \
+			fread(&(svd_fruits[i]), sizeof(svd_fruits[i]), 1, f); \
+                                                            \
+	fread(&svd_tot_agrumes, sizeof(svd_tot_agrumes), 1, f);   \
+                                                            \
+	fclose(f);
+
+#define AGRUMES_SAVE_DATA                                  \
+	f = fopen(VALUES_AGRUMES_FILE, "w");                     \
+                                                           \
+	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)           \
+		fwrite(&(svd_fruits[i]), sizeof(svd_fruits[i]), 1, f); \
+	fwrite(&svd_tot_agrumes, sizeof(svd_tot_agrumes), 1, f); \
+                                                           \
+	fclose(f);
 
 typedef enum
 {
@@ -40,6 +85,7 @@ static uint32_t svd_miel_citron;
 void bon_commande_miels(void);
 void bon_commande_fruits(void);
 void stats(void);
+void get_client_id(FILE *f);
 
 int main(int argc, char **argv)
 {
@@ -85,55 +131,7 @@ void bon_commande_miels(void)
 
 	FILE *f = fopen(MIELS_AMANDES_FILE, "a");
 
-	// nom du client
-	char nom[64 + 1] = {0};
-	do
-	{
-		printf("nom : ");
-		scanf("%64[^\n]", nom);
-		fflush(stdin);
-		if (nom[0] == 0)
-			printf("Il faut fournir un nom pour le client.\n");
-	} while (nom[0] == 0);
-
-	// printf("le client s'appelle %s %s\n", prenom, nom);
-
-	fprintf(f, "|%-64s|  ", nom);
-
-	// adresse du client
-	char adr[64 + 1] = {0};
-	printf("adresse : ");
-	scanf("%64[^\n]", adr);
-	fflush(stdin);
-
-	if (adr[0] == 0)
-		printf("pas d'adresse\n");
-
-	fprintf(f, "%-64s|", adr);
-
-	// numero de telephone du client
-	char tel[15] = {0};
-	printf("tel : ");
-	scanf("%14[^\n]", tel);
-	fflush(stdin);
-
-	if (tel[0] == 0)
-		printf("pas de numero de telephone\n");
-	// else
-	//     printf("le numero de telephone du client est : %s\n", tel);
-
-	fprintf(f, "%14s", tel);
-
-	// e-mail du client
-	char mail[64 + 1] = {0};
-	printf("e-mail : ");
-	scanf("%64[^\n]", mail);
-	fflush(stdin);
-
-	if (mail[0] == 0)
-		printf("pas d'e-mail\n");
-	// else
-	//     printf("l'e-mail du client est %s\n", mail);
+	get_client_id(f);
 
 	char tmp = 0;
 
@@ -160,38 +158,19 @@ void bon_commande_miels(void)
 
 	printf("le client doit payer %.1f\n", (double)tot_prix / 10);
 
-	fprintf(f, "  |  %-62s|%12u|%12u|%12u|%12.1f|\n", mail, amandes, miel_orange, miel_citron, (double)tot_prix / 10);
+	fprintf(f, "|%12u|%12u|%12u|%12.1f|\n", amandes, miel_orange, miel_citron, (double)tot_prix / 10);
 	fprintf(f, "|----------------------------------------------------------------|------------------------------------------------------------------|----------------|----------------------------------------------------------------|------------|------------|------------|------------|\n");
 
 	fclose(f);
 
-	f = fopen("values_miels_amandes.bin", "r");
-
-	if (f != NULL)
-	{
-		fread(&svd_amandes, sizeof(svd_amandes), 1, f);
-		fread(&svd_miel_orange, sizeof(svd_miel_orange), 1, f);
-		fread(&svd_miel_citron, sizeof(svd_miel_citron), 1, f);
-		fread(&svd_tot_miels, sizeof(svd_tot_miels), 1, f);
-	}
-
-	fclose(f);
+	MIELS_AMANDES_READ_DATA;
 
 	svd_amandes += amandes;
 	svd_miel_orange += miel_orange;
 	svd_miel_citron += miel_citron;
 	svd_tot_miels += tot_prix;
 
-	f = fopen("values_miels_amandes.bin", "w");
-
-	fwrite(&svd_amandes, sizeof(svd_amandes), 1, f);
-	fwrite(&svd_miel_orange, sizeof(svd_miel_orange), 1, f);
-	fwrite(&svd_miel_citron, sizeof(svd_miel_citron), 1, f);
-	fwrite(&svd_tot_miels, sizeof(svd_tot_miels), 1, f);
-
-	fclose(f);
-
-	printf("%u, %u, %u, %u\n", svd_amandes, svd_miel_orange, svd_miel_citron, svd_tot_miels);
+	MIELS_AMANDES_SAVE_DATA
 
 	return;
 }
@@ -202,55 +181,7 @@ void bon_commande_fruits(void)
 
 	FILE *f = fopen(FRUITS_FILE, "a");
 
-	// nomdu client
-	char nom[64 + 1] = {0};
-	do
-	{
-		printf("nom : ");
-		scanf("%64[^\n]", nom);
-		fflush(stdin);
-		if (nom[0] == 0)
-			printf("Il faut fournir un nom pour le client.\n");
-	} while (nom[0] == 0);
-
-	// printf("le client s'appelle %s %s\n", prenom, nom);
-
-	fprintf(f, "|%-64s|  ", nom);
-
-	// adresse du client
-	char adr[64 + 1] = {0};
-	printf("adresse : ");
-	scanf("%64[^\n]", adr);
-	fflush(stdin);
-
-	if (adr[0] == 0)
-		printf("pas d'adresse\n");
-
-	fprintf(f, "%-64s|", adr);
-
-	// numero de telephone du client
-	char tel[15] = {0};
-	printf("tel : ");
-	scanf("%14[^\n]", tel);
-	fflush(stdin);
-
-	if (tel[0] == 0)
-		printf("pas de numero de telephone\n");
-	// else
-	//     printf("le numero de telephone du client est : %s\n", tel);
-
-	fprintf(f, "%14s", tel);
-
-	// e-mail du client
-	char mail[64 + 1] = {0};
-	printf("e-mail : ");
-	scanf("%64[^\n]", mail);
-	fflush(stdin);
-
-	if (mail[0] == 0)
-		printf("pas d'e-mail\n");
-	// else
-	//     printf("l'e-mail du client est %s\n", mail);
+	get_client_id(f);
 
 	// prise de la commande en cagettes
 	uint32_t commande[NB_TYPE_CAGETTES] = {0};
@@ -310,46 +241,32 @@ void bon_commande_fruits(void)
 
 	// saving the data
 
-	fprintf(f, "  |  %-62s|%9u|%9u|%9u|%9u|%9u|%9u|%9u|%9u|%9u|%9.1f|\n", mail, commande[0], commande[1], commande[2], commande[3], commande[4], commande[5], commande[6], commande[7], tot_cagettes, (double)tot_prix / 10);
+	fprintf(f, "|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9.1f|\n", commande[0], commande[1], commande[2], commande[3], commande[4], commande[5], commande[6], commande[7], tot_cagettes, (double)tot_prix / 10);
 
 	fprintf(f, "|----------------------------------------------------------------|------------------------------------------------------------------|----------------|----------------------------------------------------------------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|\n");
 
 	fclose(f);
 
-	// savging the totals
-
-	f = fopen("values_agrumes.bin", "r");
-
-	if (f != NULL)
-		for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
-			fread(&(svd_fruits[i]), sizeof(svd_fruits[i]), 1, f);
-
-	fread(&svd_tot_agrumes, sizeof(svd_tot_agrumes), 1, f);
-
-	fclose(f);
+	AGRUMES_READ_DATA;
 
 	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
 		svd_fruits[i] += commande[i];
 
 	svd_tot_agrumes += tot_prix;
 
-	f = fopen("values_agrumes.bin", "w");
-
-	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
-		fwrite(&(svd_fruits[i]), sizeof(svd_fruits[i]), 1, f);
-	fwrite(&svd_tot_agrumes, sizeof(svd_tot_agrumes), 1, f);
-
-	fclose(f);
-
-	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
-		printf("%u, ", svd_fruits[i]);
-	printf("%u\n", tot_prix);
+	AGRUMES_SAVE_DATA;
 
 	return;
 }
 
 void stats(void)
 {
+	FILE *f;
+
+	MIELS_AMANDES_READ_DATA;
+
+	AGRUMES_READ_DATA;
+
 	printf("STATISTIQUES : \n");
 
 	printf("Ventes de miels et d'amandes : \n");
@@ -393,6 +310,63 @@ void stats(void)
 	}
 	printf("%-7.1f|\n", (double)tot / 10);
 	printf("|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n");
+
+	return;
+}
+
+void get_client_id(FILE *f)
+{
+	// nom du client
+	char nom[64 + 1] = {0};
+	do
+	{
+		printf("nom : ");
+		scanf("%64[^\n]", nom);
+		fflush(stdin);
+		if (nom[0] == 0)
+			printf("Il faut fournir un nom pour le client.\n");
+	} while (nom[0] == 0);
+
+	// printf("le client s'appelle %s %s\n", prenom, nom);
+
+	fprintf(f, "|%-64s|  ", nom);
+
+	// adresse du client
+	char adr[64 + 1] = {0};
+	printf("adresse : ");
+	scanf("%64[^\n]", adr);
+	fflush(stdin);
+
+	if (adr[0] == 0)
+		printf("pas d'adresse\n");
+
+	fprintf(f, "%-64s|", adr);
+
+	// numero de telephone du client
+	char tel[15] = {0};
+	printf("tel : ");
+	scanf("%14[^\n]", tel);
+	fflush(stdin);
+
+	if (tel[0] == 0)
+		printf("pas de numero de telephone\n");
+	// else
+	//     printf("le numero de telephone du client est : %s\n", tel);
+
+	fprintf(f, "%14s", tel);
+
+	// e-mail du client
+	char mail[64 + 1] = {0};
+	printf("e-mail : ");
+	scanf("%64[^\n]", mail);
+	fflush(stdin);
+
+	if (mail[0] == 0)
+		printf("pas d'e-mail\n");
+	// else
+	//     printf("l'e-mail du client est %s\n", mail);
+
+	fprintf(f, "  |  %-62s", mail);
 
 	return;
 }
