@@ -91,8 +91,6 @@ int main(int argc, char **argv)
 {
 	--argc, ++argv;
 
-	setlocale(LC_ALL, "C.UTF-8");
-
 	uint8_t run = 1;
 
 	while (run)
