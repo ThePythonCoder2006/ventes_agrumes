@@ -86,6 +86,7 @@ void bon_commande_miels(void);
 void bon_commande_fruits(void);
 void stats(void);
 void get_client_id(FILE *f);
+void get_list(void);
 
 int main(int argc, char **argv)
 {
@@ -114,6 +115,8 @@ int main(int argc, char **argv)
 			bon_commande_miels();
 		else if (commande_type == 'S')
 			stats();
+		else if (commande_type == 'L')
+			get_list();
 		else
 		{
 			printf("'%c', n'est pas une commande valide, les commandes valides sont: 'O' (oui), 'N'(non), 'S' (statistiques) et 'Q' (quitter)\n", commande_type);
@@ -154,10 +157,32 @@ void bon_commande_miels(void)
 
 	uint32_t tot_prix = miel_citron * prix_miel_citron + miel_orange * prix_miel_orange + amandes * prix_amandes;
 
+	if (tot_prix == 0)
+	{
+		printf("le client n'a pas passe commande, elle n'a pas ete enregistree.");
+		return;
+	}
+
 	printf("le client doit payer %.1f\n", (double)tot_prix / 10);
 
-	fprintf(f, "|%12u|%12u|%12u|%12.1f|\n", amandes, miel_orange, miel_citron, (double)tot_prix / 10);
-	fprintf(f, "|----------------------------------------------------------------|------------------------------------------------------------------|----------------|----------------------------------------------------------------|------------|------------|------------|------------|\n");
+	char pay;
+	printf("le client a-t-il paye ? (O (oui) ou N (non))");
+	scanf("%c", &pay);
+	fflush(stdin);
+	while (toupper(pay) != 'O' && toupper(pay) != 'N' && pay != '\n')
+	{
+		printf("Il faut que vous repondiez soit 'O' soit 'N' soit rien\n");
+		printf("le client a-t-il paye ? (O (oui) ou N (non))");
+		scanf("%c", &pay);
+	}
+
+	if (pay == '\n')
+		pay = 'n';
+	else
+		pay = toupper(pay);
+
+	fprintf(f, "|%12u|%12u|%12u|%12.1f|  %c  |\n", amandes, miel_orange, miel_citron, (double)tot_prix / 10, pay);
+	fprintf(f, "|----------------------------------------------------------------|------------------------------------------------------------------|----------------|----------------------------------------------------------------|------------|------------|------------|------------|-----|\n");
 
 	fclose(f);
 
@@ -235,13 +260,35 @@ void bon_commande_fruits(void)
 		tot_prix += commande[i] * prix[i];
 	}
 
+	if (tot_prix == 0)
+	{
+		printf("le client n'a pas passe commande, elle n'a pas ete enregistree.");
+		return;
+	}
+
 	printf("le client a pris %u cagette%c et le total et de %.1f euro%c\n", tot_cagettes, tot_cagettes > 1 ? 's' : 0, (double)tot_prix / 10, tot_prix > 1 ? 's' : 0);
+
+	char pay;
+	printf("le client a-t-il paye ? (O (oui) ou N (non))");
+	scanf("%c", &pay);
+	fflush(stdin);
+	while (toupper(pay) != 'O' && toupper(pay) != 'N' && pay != '\n')
+	{
+		printf("Il faut que vous repondiez soit 'O' soit 'N' soit rien\n");
+		printf("le client a-t-il paye ? (O (oui) ou N (non))");
+		scanf("%c", &pay);
+	}
+
+	if (pay == '\n')
+		pay = 'n';
+	else
+		pay = toupper(pay);
 
 	// saving the data
 
-	fprintf(f, "|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9.1f|\n", commande[0], commande[1], commande[2], commande[3], commande[4], commande[5], commande[6], commande[7], tot_cagettes, (double)tot_prix / 10);
+	fprintf(f, "|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9.1f|  %c  |\n", commande[0], commande[1], commande[2], commande[3], commande[4], commande[5], commande[6], commande[7], tot_cagettes, (double)tot_prix / 10, pay);
 
-	fprintf(f, "|----------------------------------------------------------------|------------------------------------------------------------------|----------------|----------------------------------------------------------------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|\n");
+	fprintf(f, "|----------------------------------------------------------------|------------------------------------------------------------------|----------------|----------------------------------------------------------------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|-----|\n");
 
 	fclose(f);
 
@@ -327,7 +374,7 @@ void get_client_id(FILE *f)
 
 	// printf("le client s'appelle %s %s\n", prenom, nom);
 
-	fprintf(f, "|%-64s|  ", nom);
+	fprintf(f, "|  %-62s|  ", nom);
 
 	// adresse du client
 	char adr[64 + 1] = {0};
@@ -351,7 +398,7 @@ void get_client_id(FILE *f)
 	// else
 	//     printf("le numero de telephone du client est : %s\n", tel);
 
-	fprintf(f, "%14s", tel);
+	fprintf(f, "%-14s", tel);
 
 	// e-mail du client
 	char mail[64 + 1] = {0};
@@ -365,6 +412,22 @@ void get_client_id(FILE *f)
 	//     printf("l'e-mail du client est %s\n", mail);
 
 	fprintf(f, "  |  %-62s", mail);
+
+	return;
+}
+
+void get_list(void)
+{
+	FILE *f = fopen(FRUITS_FILE, "r");
+
+	char name[64 + 1], tel[14 + 1], mail[64 + 1];
+	uint32_t cagettes, prix;
+
+	fscanf(f, "%*[^\n]%*[^\n]%*[^\n]%*4c%62[^\n]%*70c%14[^\n]%*3c%64s%*[^|]%*89c%u%*5c%u", name, tel, mail, &cagettes, &prix);
+
+	printf("nom : %s, tel : %14s, e-mail : %s, nb cagettes : %u, prix : %u,\n", name, tel, mail, cagettes, prix);
+
+	fclose(f);
 
 	return;
 }
