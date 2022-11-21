@@ -4,8 +4,6 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include <locale.h>
-#include <wchar.h>
 
 #define FRUITS_FILE "commande_fruits.txt"
 #define MIELS_AMANDES_FILE "commande_miels_amandes.txt"
@@ -68,6 +66,8 @@ typedef enum
 	NB_TYPE_CAGETTES
 } cagette;
 
+char cagette_names[NB_TYPE_CAGETTES][32] = {"oranges", "mandarines", "pamplemousses", "citrons", "oranges et mandarines", "oranges et pamplemousses", "oranges et citrons", "mandarines et citrons"};
+
 const uint32_t prix[NB_TYPE_CAGETTES] = {240, 270, 270, 300, 265, 255, 275, 290};
 
 const uint32_t prix_miel_orange = 115;
@@ -85,8 +85,9 @@ static uint32_t svd_miel_citron;
 void bon_commande_miels(void);
 void bon_commande_fruits(void);
 void stats(void);
-void get_client_id(FILE *f);
+uint8_t get_client_id(char name[65], char adr[65], char tel[15], char mail[65]);
 void get_list(void);
+void help(void);
 
 int main(int argc, char **argv)
 {
@@ -96,30 +97,67 @@ int main(int argc, char **argv)
 
 	while (run)
 	{
-		printf("commande d'agrummes ? ([O] (oui) / N (non)");
-		char commande_type;
-		scanf("%c", &commande_type);
-		fflush(stdin);
+		printf("[LISTE DES COMMANDES]\n"
+					 "c : nouvelles commande\n"
+					 "s : statistiques\n"
+					 "l : liste des commandes non-payee\n"
+					 "h : aide\n"
+					 "q : quitter\n");
 
-		commande_type = toupper(commande_type);
+		printf("> ");
 
-		if (commande_type == 'Q')
+		char action;
+		scanf("%c", &action);
+
+		if (toupper(action) == 'Q')
 		{
 			run = 0;
 			continue;
 		}
 
-		if (commande_type == 'O' || commande_type == '\n')
-			bon_commande_fruits();
-		else if (commande_type == 'N')
-			bon_commande_miels();
-		else if (commande_type == 'S')
-			stats();
-		else if (commande_type == 'L')
-			get_list();
+		if (toupper(action) == 'C')
+		{
+		start:
+			printf("commande d'agrumes ? (O (oui) ou N (non))");
+			scanf("%c", &action);
+			if (action == '\n')
+				scanf("%c", &action);
+			fflush(stdin);
+
+			if (toupper(action) == 'O' || toupper(action) == 'A')
+				bon_commande_fruits();
+			else if (toupper(action) == 'N' || toupper(action) == 'M')
+				bon_commande_miels();
+			else if (toupper(action) == 'Q')
+				continue;
+			else
+			{
+				printf("'%s%c' n'est pas un reponse valide, il faut repondre par 'o' (oui) ou 'n' (non) ou alors 'a' (agrumes) ou 'm' (miels et amandes) ou 'q' (quitter)\n", action == '\n' ? "[enter]" : "", action != '\n' ? action : 0);
+				goto start;
+			}
+		}
 		else
 		{
-			printf("'%c', n'est pas une commande valide, les commandes valides sont: 'O' (oui), 'N'(non), 'S' (statistiques) et 'Q' (quitter)\n", commande_type);
+			fflush(stdin);
+
+			switch (toupper(action))
+			{
+			case 'S':
+				stats();
+				break;
+
+			case 'L':
+				get_list();
+				break;
+
+			case 'H':
+				help();
+				break;
+
+			default:
+				printf("'%s%c', n'est pas une commande valide, faire 'h' pour avoir de l'aide sur les commandes\n", action == '\n' ? "[enter]" : "", action != '\n' ? action : 0);
+				break;
+			}
 		}
 	}
 
@@ -128,38 +166,51 @@ int main(int argc, char **argv)
 
 void bon_commande_miels(void)
 {
-	printf("BON DE COMMANDE DE MIELS ET D'AMANDES\n");
+	printf("\nBON DE COMMANDE DE MIELS ET D'AMANDES\n");
 
 	FILE *f = fopen(MIELS_AMANDES_FILE, "a");
 
-	get_client_id(f);
+	char name[64 + 1], adr[64 + 1], tel[14 + 1], mail[64 + 1];
+
+	if (get_client_id(name, adr, tel, mail))
+		return;
 
 	char tmp = 0;
 
 	uint32_t tmp2 = 0;
+
+	uint32_t amandes = 0;
 	printf("amandes : ");
 	if (scanf("%1[\n]", &tmp) == 0)
+	{
 		scanf("%u", &tmp2);
+		amandes = tmp2;
+	}
 	fflush(stdin);
-	uint32_t amandes = tmp2;
 
+	uint32_t miel_orange = 0;
 	printf("miel oranger : ");
 	if (scanf("%1[\n]", &tmp) == 0)
+	{
 		scanf("%u", &tmp2);
+		miel_orange = tmp2;
+	}
 	fflush(stdin);
-	uint32_t miel_orange = tmp2;
 
+	uint32_t miel_citron = 0;
 	printf("miel citronnier : ");
 	if (scanf("%1[\n]", &tmp) == 0)
+	{
 		scanf("%u", &tmp2);
+		miel_citron = tmp2;
+	}
 	fflush(stdin);
-	uint32_t miel_citron = tmp2;
 
 	uint32_t tot_prix = miel_citron * prix_miel_citron + miel_orange * prix_miel_orange + amandes * prix_amandes;
 
 	if (tot_prix == 0)
 	{
-		printf("le client n'a pas passe commande, elle n'a pas ete enregistree.");
+		printf("le client n'a pas passe commande, elle n'a pas ete enregistree.\n");
 		return;
 	}
 
@@ -177,11 +228,20 @@ void bon_commande_miels(void)
 	}
 
 	if (pay == '\n')
-		pay = 'n';
+		pay = 'N';
 	else
 		pay = toupper(pay);
 
-	fprintf(f, "|%12u|%12u|%12u|%12.1f|  %c  |\n", amandes, miel_orange, miel_citron, (double)tot_prix / 10, pay);
+	fprintf(f, "|  %-62s" // name
+						 "|  %-64s" // adresse
+						 "|%-14s  " // telephone
+						 "|  %-62s" // e-mail
+						 "|%-12u"
+						 "|%-12u"
+						 "|%-12u"
+						 "|%-12.1f"
+						 "|  %c  |\n",
+					name, adr, tel, mail, amandes, miel_orange, miel_citron, (double)tot_prix / 10, pay);
 	fprintf(f, "|----------------------------------------------------------------|------------------------------------------------------------------|----------------|----------------------------------------------------------------|------------|------------|------------|------------|-----|\n");
 
 	fclose(f);
@@ -200,11 +260,14 @@ void bon_commande_miels(void)
 
 void bon_commande_fruits(void)
 {
-	printf("BON DE COMMANDE DE FRUITS\n");
+	printf("\nBON DE COMMANDE D'AGRUMES\n");
 
 	FILE *f = fopen(FRUITS_FILE, "a");
 
-	get_client_id(f);
+	char name[64 + 1], adr[64 + 1], tel[14 + 1], mail[64 + 1];
+
+	if (get_client_id(name, adr, tel, mail))
+		return;
 
 	// prise de la commande en cagettes
 	uint32_t commande[NB_TYPE_CAGETTES] = {0};
@@ -262,7 +325,7 @@ void bon_commande_fruits(void)
 
 	if (tot_prix == 0)
 	{
-		printf("le client n'a pas passe commande, elle n'a pas ete enregistree.");
+		printf("le client n'a pas passe commande, elle n'a pas ete enregistree.\n");
 		return;
 	}
 
@@ -286,7 +349,20 @@ void bon_commande_fruits(void)
 
 	// saving the data
 
-	fprintf(f, "|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9u|%-9.1f|  %c  |\n", commande[0], commande[1], commande[2], commande[3], commande[4], commande[5], commande[6], commande[7], tot_cagettes, (double)tot_prix / 10, pay);
+	fprintf(f, "|  %-62s" // nom
+						 "|  %-64s" // adresse
+						 "|%-14s  " // telephone
+						 "|  %-62s" // e-mail
+					,
+					name, adr, tel, mail);
+
+	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
+		fprintf(f, "|%-9u", commande[i]);
+
+	fprintf(f, "|%-9u"
+						 "|%-9.1f"
+						 "|  %c  |\n",
+					tot_cagettes, (double)tot_prix / 10, pay);
 
 	fprintf(f, "|----------------------------------------------------------------|------------------------------------------------------------------|----------------|----------------------------------------------------------------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|-----|\n");
 
@@ -326,6 +402,30 @@ void stats(void)
 				 (double)(prix_miel_citron * svd_miel_citron) / 10, (double)((prix_amandes * svd_amandes) + (prix_miel_orange * svd_miel_orange) + (prix_miel_citron * svd_miel_citron)) / 10);
 	printf("|-------------------------------------------------------------------------------|\n");
 
+	if (svd_amandes > svd_miel_citron && svd_amandes > svd_miel_orange)
+		printf("le produit le plus vendu est les amandes\n");
+	// amandes <= miel citron et amandes <= miel orange
+	else if (svd_amandes == svd_miel_citron)
+		if (svd_amandes == svd_miel_orange)
+			printf("les produits les plus vendus sont les amandes, le miel d'orangier et le miel de citronnier\n");
+		else
+			printf("les produits les plus vendus sont les amandes et le miel de citronnier\n");
+	else if (svd_amandes == svd_miel_orange)
+		printf("les produits les plus vendus sont les amandes et le miel d'orangier\n");
+	// amandes < miel citron et amandes < miel orange
+	else if (svd_miel_citron > svd_miel_orange)
+		printf("le produit le plus vendu est le miel de citronnier\n");
+	else if (svd_miel_citron == svd_miel_orange)
+		printf("les produits les plus vendus sont le miel d'orangier et le miel de citronnier");
+	else if (svd_miel_orange > svd_miel_citron)
+		printf("le produit le plus vendu est le miel d'orangier");
+	else
+		printf("[ERROR] unreachable path");
+
+	printf("appuyer sur [enter] pour continuer...");
+	scanf("%*c"); // attendre que l'utilisateur ait lu les donnees
+	fflush(stdin);
+
 	const uint8_t width[NB_TYPE_CAGETTES] = {9, 12, 15, 9, 23, 26, 20, 23};
 
 	printf("\n\nVentes d'agrumes : \n");
@@ -356,78 +456,405 @@ void stats(void)
 	printf("%-7.1f|\n", (double)tot / 10);
 	printf("|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n");
 
+	uint8_t high[NB_TYPE_CAGETTES] = {0};
+	uint32_t max = 0;
+
+	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
+	{
+		if (svd_fruits[i] >= max)
+		{
+			if (svd_fruits[i] == max)
+				high[i] = 1;
+			else
+			{
+				memset(high, 0, NB_TYPE_CAGETTES * sizeof(high[0]));
+				high[i] = 1;
+				max = svd_fruits[i];
+			}
+		}
+	}
+
+	cagette high_cagette[NB_TYPE_CAGETTES];
+	uint8_t max_high_cagette = 0;
+
+	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
+	{
+		if (high[i])
+			high_cagette[max_high_cagette++] = i;
+	}
+
+	if (max_high_cagette > 1)
+	{
+		printf("les produits les plus vendus sont la cagette d%s%s", cagette_names[high_cagette[0]][0] == 'o' ? "'" : "e ", cagette_names[high_cagette[0]]);
+		for (uint8_t i = 1; i < max_high_cagette - 1; ++i)
+			printf(", la cagette d%s%s", cagette_names[high_cagette[i]][0] == 'o' ? "'" : "e ", cagette_names[high_cagette[i]]);
+		printf(" et la cagette de %s\n", cagette_names[high_cagette[max_high_cagette - 1]]);
+	}
+	else
+		printf("le produit le plus vendu est la cagette de %s\n", cagette_names[high_cagette[0]]);
+
+	printf("appuyer sur [enter] pour revenir au menu principale...");
+	scanf("%*c"); // attendre que l'utilisateur ait lu les donnees
+	fflush(stdin);
+
 	return;
 }
 
-void get_client_id(FILE *f)
+uint8_t get_client_id(char name_ptr[65], char adr_ptr[65], char tel_ptr[15], char mail_ptr[65])
 {
+	char tmp;
+
 	// nom du client
 	char nom[64 + 1] = {0};
 	do
 	{
 		printf("nom : ");
-		scanf("%64[^\n]", nom);
+		scanf("%64c", nom);
 		fflush(stdin);
 		if (nom[0] == 0)
 			printf("Il faut fournir un nom pour le client.\n");
+		if (toupper(nom[0]) == 'Q' && strlen(nom) == 1)
+		{
+			printf("voulez vous vraiment quitter la commande en cours (rien ne sera enregistre) ? (O (oui) ou [N] (non)");
+			scanf("%c", &tmp);
+			fflush(stdin);
+			if (toupper(tmp) == 'O')
+				return 1;
+			else if (toupper(tmp) != 'N' && tmp != '\n')
+				printf("vous avez repondu '%c', ce qui n'est pas une reponse valide ('O'(oui) ou 'N' (non)), la commande va donc continuer...\n", tmp);
+		}
 	} while (nom[0] == 0);
 
 	// printf("le client s'appelle %s %s\n", prenom, nom);
 
-	fprintf(f, "|  %-62s|  ", nom);
+	// fprintf(f, "|  %-62s|  ", nom);
+
+	strcpy(name_ptr, nom);
 
 	// adresse du client
 	char adr[64 + 1] = {0};
 	printf("adresse : ");
-	scanf("%64[^\n]", adr);
+	scanf("%64c", adr);
 	fflush(stdin);
-
 	if (adr[0] == 0)
 		printf("pas d'adresse\n");
+	if (toupper(adr[0]) == 'Q' && strlen(adr) == 1)
+	{
+		printf("voulez vous vraiment quitter la commande en cours (rien ne sera enregistre) ? (O (oui) ou [N] (non)");
+		scanf("%c", &tmp);
+		fflush(stdin);
+		if (toupper(tmp) == 'O')
+			return 1;
+		else if (toupper(tmp) != 'N' && tmp != '\n')
+			printf("vous avez repondu '%c', ce qui n'est pas une reponse valide ('O'(oui) ou 'N' (non)), la commande va donc continuer...\n", tmp);
+	}
 
-	fprintf(f, "%-64s|", adr);
+	// fprintf(f, "%-64s|", adr);
+
+	strcpy(adr_ptr, adr);
 
 	// numero de telephone du client
-	char tel[15] = {0};
+	char tel[14 + 1] = {0};
 	printf("tel : ");
-	scanf("%14[^\n]", tel);
+	scanf("%*[ ]%14c", tel);
 	fflush(stdin);
-
 	if (tel[0] == 0)
 		printf("pas de numero de telephone\n");
+	if (toupper(tel[0]) == 'Q' && strlen(tel) == 1)
+	{
+		printf("voulez vous vraiment quitter la commande en cours (rien ne sera enregistre) ? (O (oui) ou [N] (non)");
+		scanf("%c", &tmp);
+		fflush(stdin);
+		if (toupper(tmp) == 'O')
+			return 1;
+		else if (toupper(tmp) != 'N' && tmp != '\n')
+			printf("vous avez repondu '%c', ce qui n'est pas une reponse valide ('O'(oui) ou 'N' (non)), la commande va donc continuer...\n", tmp);
+	}
 	// else
 	//     printf("le numero de telephone du client est : %s\n", tel);
 
-	fprintf(f, "%-14s", tel);
+	// fprintf(f, "%-14s", tel);
+
+	strcpy(tel_ptr, tel);
 
 	// e-mail du client
 	char mail[64 + 1] = {0};
 	printf("e-mail : ");
-	scanf("%64[^\n]", mail);
+	scanf("%64c", mail);
 	fflush(stdin);
-
 	if (mail[0] == 0)
 		printf("pas d'e-mail\n");
+	if (toupper(mail[0]) == 'Q' && strlen(mail) == 1)
+	{
+		printf("voulez vous vraiment quitter la commande en cours (rien ne sera enregistre) ? (O (oui) ou [N] (non)");
+		scanf("%c", &tmp);
+		fflush(stdin);
+		if (toupper(tmp) == 'O')
+			return 1;
+		else if (toupper(tmp) != 'N' && tmp != '\n')
+			printf("vous avez repondu '%c', ce qui n'est pas une reponse valide ('O'(oui) ou 'N' (non)), la commande va donc continuer...\n", tmp);
+	}
 	// else
 	//     printf("l'e-mail du client est %s\n", mail);
 
-	fprintf(f, "  |  %-62s", mail);
+	// fprintf(f, "  |  %-62s", mail);
 
-	return;
+	strcpy(mail_ptr, mail);
+
+	return 0;
 }
 
 void get_list(void)
 {
-	FILE *f = fopen(FRUITS_FILE, "r");
+	char choice;
+	printf("le client a-t-il commande des agrumes ? [O] oui / N (non)");
+	scanf("%c", &choice);
+	fflush(stdin);
 
-	char name[64 + 1], tel[14 + 1], mail[64 + 1];
-	uint32_t cagettes, prix;
+	char name[62 + 1], tel[14 + 1], mail[62 + 1];
+	char prix_str[9 + 1];
+	char prix_end, pay, tmp;
 
-	fscanf(f, "%*[^\n]%*[^\n]%*[^\n]%*4c%62[^\n]%*70c%14[^\n]%*3c%64s%*[^|]%*89c%u%*5c%u", name, tel, mail, &cagettes, &prix);
+	if (toupper(choice) == 'O' || toupper(choice) == '\n')
+	{
+		printf("client n'ayant pas paye leur commande d'agrumes :\n");
 
-	printf("nom : %s, tel : %14s, e-mail : %s, nb cagettes : %u, prix : %u,\n", name, tel, mail, cagettes, prix);
+		FILE *f = fopen(FRUITS_FILE, "r");
 
-	fclose(f);
+		if (f == NULL)
+		{
+			printf("erreur lors de l'ouverture du fichier \"" FRUITS_FILE "\"");
+			return;
+		}
+
+		uint32_t cagettes;
+
+		if (fscanf(f, "%*[^\n]%*c%*[^\n]%*c") == EOF)
+		{
+			fclose(f);
+			return;
+		}
+
+		do
+		{
+			if (fscanf(f, "%*[^\n]%*c%*c") == EOF) // first line + first '|'
+			{
+				fclose(f);
+				return;
+			}
+
+			if (fscanf(f, "%*2c"				// remove "  "
+										"%62c"				// get name
+										"%*68c"				// remove adress
+										"%14c"				// get phone number
+										"%*5c"				// remove "  |  "
+										"%62c"				// get e-mail
+										"%*81c"				//
+										"%u"					// get cagettes
+										"%*[^|]%*c"		//
+										"%8[^.]"			// get prix_str
+										"%*c"					// remove the '.'
+										"%c"					// get prix_end
+										"%*[^|]%*3c"	//
+										"%c"					// get pay
+										"%*[^\n]%*c", // finish the line and remove '\n'
+								 name, tel, mail, &cagettes, prix_str, &prix_end, &pay) == EOF)
+			{
+				fclose(f);
+				return;
+			}
+
+			if (pay == 'N')
+			{
+				uint8_t i = 62;
+
+				while (name[i] == ' ' || name[i] == '\0')
+					--i;
+
+				name[i + 1] = '\0';
+
+				i = 62;
+
+				while (mail[i] == ' ' || name[i] == '\0')
+				{
+					--i;
+					if (i == 0)
+					{
+						mail[0] = '\0';
+						break;
+					}
+				}
+
+				mail[i + 1] = '\0';
+
+				if (tel[0] == ' ')
+					tel[0] = '\0';
+
+				printf("%s  "
+							 "%s%s%s"
+							 "%s%s%s"
+							 "|  %u cagettes  |  %s.%c",
+							 name,
+							 tel[0] != '\0' ? "|  " : "", tel, tel[0] != '\0' ? "  " : "",
+							 mail[0] != '\0' ? "|  " : "", mail, mail[0] != '\0' ? "  " : "",
+							 cagettes, prix_str, prix_end);
+			}
+		} while (scanf("%c", &tmp), fflush(stdin), toupper(tmp) != 'Q');
+
+		fclose(f);
+	}
+	else if (toupper(choice) == 'N')
+	{
+		printf("client n'ayant pas paye leur commande de miels et d'amandes\n");
+
+		FILE *f = fopen(MIELS_AMANDES_FILE, "r");
+
+		if (f == NULL)
+		{
+			printf("erreur lors de l'ouverture du fichier \"" MIELS_AMANDES_FILE "\"");
+			return;
+		}
+
+		if (fscanf(f, "%*[^\n]%*c%*[^\n]%*c") == EOF)
+		{
+			fclose(f);
+			return;
+		}
+
+		do
+		{
+			if (fscanf(f, "%*[^\n]%*c%*c") == EOF) // first line + first '|'
+			{
+				fclose(f);
+				return;
+			}
+
+			if (fscanf(f, "%*2c"				// remove "  "
+										"%62c"				// get name
+										"%*68c"				// remove adresse
+										"%14c"				// get phone number
+										"%*5c"				// remove "  |  "
+										"%62c"				// get e-mail
+										"%*40c"				//
+										"%8[^.]"			// get prix_str
+										"%*c"					// remove the '.'
+										"%c"					// get prix_end
+										"%*[^|]%*3c"	//
+										"%c"					// get pay
+										"%*[^\n]%*c", // finish the line and remove '\n'
+								 name, tel, mail, prix_str, &prix_end, &pay) == EOF)
+			{
+				fclose(f);
+				return;
+			}
+
+			if (pay == 'N')
+			{
+				uint8_t i = 62;
+
+				while (name[--i] == ' ' || name[i] == '\0')
+					;
+
+				name[i + 1] = '\0';
+
+				i = 62;
+
+				while (mail[--i] == ' ' || name[i] == '\0')
+					if (i == 0)
+					{
+						mail[0] = '\0';
+						break;
+					}
+
+				mail[i + 1] = '\0';
+
+				if (tel[0] == ' ')
+					tel[0] = '\0';
+
+				printf("%s  "
+							 "%s%s%s"
+							 "%s%s%s"
+							 "|  %s.%c",
+							 name,
+							 tel[0] != '\0' ? "|  " : "", tel, tel[0] != '\0' ? "  " : "",
+							 mail[0] != '\0' ? "|  " : "", mail, mail[0] != '\0' ? "  " : "",
+							 prix_str, prix_end);
+			}
+
+		} while (scanf("%c", &tmp), fflush(stdin), toupper(tmp) != 'Q');
+
+		fclose(f);
+	}
+	else if (toupper(choice) == 'Q')
+		return;
+	else
+		printf("'%c' n'est pas une reponse valide, il faut repondre 'O' ou 'N' ou rien\n", choice);
+
+	return;
+}
+
+void help(void)
+{
+	char action;
+	printf("Sur quelle commande souhaitez vous de l'aide ? (c, s, l, h ou q)\n> ");
+	scanf("%c", &action);
+	fflush(stdin);
+
+	switch (toupper(action))
+	{
+	case 'C':
+		printf("entrer une commande :\n"
+					 "vous permet d'entrer un commande, elle sera enregistree si le client a commande quelque chose. il est possible de quitter la commande en cours e nrepondant 'q'. il est possible de se rendre directement dans un des bon de commande depuis le menu principale en tapant \"ca\" (ou \"co\") pour remplir une commande d'agrumes et en tapant \"cm\" (ou \"cn\") pour remplir une commande de miels et d'amandes\n"
+					 "champs a remplir : (les champs avec un asteriques (*) sont obligatoires)\n"
+					 "\t- quel type de commande le client passe-t-il ? (miel et amandes ou agrumes) (*)\n"
+					 "\t- nom du client (*)\n"
+					 "\t- adresse du client\n"
+					 "\t- numero de telephone de client\n"
+					 "\t- adresse e-mail (courriel) du client\n"
+					 "il faudra ensuite repondre par un chiffre ou ne pas repondre (ce qui correspond a repondre 0) a tout les type de produit que le client pourrait vouloir, en fonction de quel type de commande a ete choisi (miels et amandes ou agrumes)\n");
+		break;
+
+	case 'S':
+		printf("statistiques :\n"
+					 "affiche des statistique sur les ventes qui on deja eu lieu. Ces statistiques sont separer par type de commande (meils et amandes ou agrumes)\n"
+					 "les statistiques afficher sont :\n"
+					 "\t- le total vendu en poids par categorie de produit\n"
+					 "\t- le total vendu en poids\n"
+					 "\t- la recette total par categorie de produit\n"
+					 "\t- la recette total \n");
+		break;
+
+	case 'L':
+		printf("liste des commandes non-payee :\n"
+					 "affiche la liste des commandes non-payee. Il faut appuyer sur la touche [enter] pour voir la commande suivant, si la dernière commande a ete atteinte, la commande se termine et vous etes renvoyer au menu principale, vous pouvez a ce moment la ecrire 'q' et appuyer sur la touche [enter] pour revenir au menu principale sans continuer ni voir les commandes suivantes\n"
+					 "les informations presentes sont : (les champs marquees par un asterisque (*) ne seront pas presents s'il n'ont pas ete renseigne lors de la prise de la commande)"
+					 "\t- le nom et prenom du client\n"
+					 "\t- le numero de telephone du client (*)\n"
+					 "\t- l'adresse e-mail (couriel) du client (*)\n"
+					 "\t- le prix de la commande\n");
+		break;
+
+	case 'H':
+		printf("affiche ce menu d'aide...");
+		break;
+
+	case 'Q':
+		printf("quitter : \n"
+					 "permet de quitter la procedure actuelle.\n"
+					 "La commande 'q' peut etre utiliser dans plusieurs endroit different : \n"
+					 "\t- dans le menu principale pour quitter le logiciel\n"
+					 "\t- dans les bon de commande, du debut et durant tout la phase de prise des information du client\n"
+					 "\t- dans la commande 'l' pour quitter et revenir au menu principale\n");
+		break;
+
+	default:
+		printf("'%s%c' n'est pas une commande valide, il faut repondre par 'c', 's', 'l', 'h' ou 'q'", action == '\n' ? "[enter]" : "", action != '\n' ? action : 0);
+		break;
+	}
+
+	printf("appuyer sur [enter] pour continuer...");
+	scanf("%*c");
+	fflush(stdin);
 
 	return;
 }
