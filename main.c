@@ -493,7 +493,7 @@ void stats(void)
 	else
 		printf("le produit le plus vendu est la cagette de %s\n", cagette_names[high_cagette[0]]);
 
-	printf("appuyer sur [enter] pour revenir au menu principale...");
+	printf("appuyer sur [enter] pour revenir au menu principal...");
 	scanf("%*c"); // attendre que l'utilisateur ait lu les donnees
 	fflush(stdin);
 
@@ -813,7 +813,7 @@ void help(void)
 	{
 	case 'C':
 		printf("entrer une commande :\n"
-					 "vous permet d'entrer un commande, elle sera enregistree si le client a commande quelque chose. il est possible de quitter la commande en cours e nrepondant 'q'. il est possible de se rendre directement dans un des bon de commande depuis le menu principale en tapant \"ca\" (ou \"co\") pour remplir une commande d'agrumes et en tapant \"cm\" (ou \"cn\") pour remplir une commande de miels et d'amandes\n"
+					 "vous permet d'entrer un commande, elle sera enregistree si le client a commande quelque chose. il est possible de quitter la commande en cours e nrepondant 'q'. il est possible de se rendre directement dans un des bon de commande depuis le menu principal en tapant \"ca\" (ou \"co\") pour remplir une commande d'agrumes et en tapant \"cm\" (ou \"cn\") pour remplir une commande de miels et d'amandes\n"
 					 "champs a remplir : (les champs avec un asteriques (*) sont obligatoires)\n"
 					 "\t- quel type de commande le client passe-t-il ? (miel et amandes ou agrumes) (*)\n"
 					 "\t- nom du client (*)\n"
@@ -835,7 +835,7 @@ void help(void)
 
 	case 'L':
 		printf("liste des commandes non-payee :\n"
-					 "affiche la liste des commandes non-payee. Il faut appuyer sur la touche [enter] pour voir la commande suivant, si la dernière commande a ete atteinte, la commande se termine et vous etes renvoyer au menu principale, vous pouvez a ce moment la ecrire 'q' et appuyer sur la touche [enter] pour revenir au menu principale sans continuer ni voir les commandes suivantes\n"
+					 "affiche la liste des commandes non-payee. Il faut appuyer sur la touche [enter] pour voir la commande suivant, si la dernière commande a ete atteinte, la commande se termine et vous etes renvoyer au menu principal, vous pouvez a ce moment la ecrire 'q' et appuyer sur la touche [enter] pour revenir au menu principal sans continuer ni voir les commandes suivantes\n"
 					 "les informations presentes sont : (les champs marquees par un asterisque (*) ne seront pas presents s'il n'ont pas ete renseigne lors de la prise de la commande)"
 					 "\t- le nom et prenom du client\n"
 					 "\t- le numero de telephone du client (*)\n"
@@ -851,9 +851,9 @@ void help(void)
 		printf("quitter : \n"
 					 "permet de quitter la procedure actuelle.\n"
 					 "La commande 'q' peut etre utiliser dans plusieurs endroit different : \n"
-					 "\t- dans le menu principale pour quitter le logiciel\n"
+					 "\t- dans le menu principal pour quitter le logiciel\n"
 					 "\t- dans les bon de commande, du debut et durant tout la phase de prise des information du client\n"
-					 "\t- dans la commande 'l' pour quitter et revenir au menu principale\n");
+					 "\t- dans la commande 'l' pour quitter et revenir au menu principal\n");
 		break;
 
 	default:
