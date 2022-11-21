@@ -509,7 +509,7 @@ uint8_t get_client_id(char name_ptr[65], char adr_ptr[65], char tel_ptr[15], cha
 	do
 	{
 		printf("nom : ");
-		scanf("%64c", nom);
+		scanf("%64[^\n]", nom);
 		fflush(stdin);
 		if (nom[0] == 0)
 			printf("Il faut fournir un nom pour le client.\n");
@@ -534,7 +534,7 @@ uint8_t get_client_id(char name_ptr[65], char adr_ptr[65], char tel_ptr[15], cha
 	// adresse du client
 	char adr[64 + 1] = {0};
 	printf("adresse : ");
-	scanf("%64c", adr);
+	scanf("%64[^\n]", adr);
 	fflush(stdin);
 	if (adr[0] == 0)
 		printf("pas d'adresse\n");
@@ -556,7 +556,8 @@ uint8_t get_client_id(char name_ptr[65], char adr_ptr[65], char tel_ptr[15], cha
 	// numero de telephone du client
 	char tel[14 + 1] = {0};
 	printf("tel : ");
-	scanf("%*[ ]%14c", tel);
+	scanf("%*[ ]");
+	scanf("%14[^\n]", tel);
 	fflush(stdin);
 	if (tel[0] == 0)
 		printf("pas de numero de telephone\n");
@@ -580,7 +581,7 @@ uint8_t get_client_id(char name_ptr[65], char adr_ptr[65], char tel_ptr[15], cha
 	// e-mail du client
 	char mail[64 + 1] = {0};
 	printf("e-mail : ");
-	scanf("%64c", mail);
+	scanf("%64[^\n]", mail);
 	fflush(stdin);
 	if (mail[0] == 0)
 		printf("pas d'e-mail\n");
@@ -698,8 +699,12 @@ void get_list(void)
 							 tel[0] != '\0' ? "|  " : "", tel, tel[0] != '\0' ? "  " : "",
 							 mail[0] != '\0' ? "|  " : "", mail, mail[0] != '\0' ? "  " : "",
 							 cagettes, prix_str, prix_end);
+				scanf("%c", &tmp);
+				fflush(stdin);
 			}
-		} while (scanf("%c", &tmp), fflush(stdin), toupper(tmp) != 'Q');
+			else
+				continue;
+		} while (toupper(tmp) != 'Q');
 
 		fclose(f);
 	}
@@ -779,9 +784,13 @@ void get_list(void)
 							 tel[0] != '\0' ? "|  " : "", tel, tel[0] != '\0' ? "  " : "",
 							 mail[0] != '\0' ? "|  " : "", mail, mail[0] != '\0' ? "  " : "",
 							 prix_str, prix_end);
+				scanf("%c", &tmp);
+				fflush(stdin);
 			}
+			else
+				continue;
 
-		} while (scanf("%c", &tmp), fflush(stdin), toupper(tmp) != 'Q');
+		} while (toupper(tmp) != 'Q');
 
 		fclose(f);
 	}
