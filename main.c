@@ -407,7 +407,10 @@ void stats(void)
 	// amandes <= miel citron et amandes <= miel orange
 	else if (svd_amandes == svd_miel_citron)
 		if (svd_amandes == svd_miel_orange)
-			printf("les produits les plus vendus sont les amandes, le miel d'orangier et le miel de citronnier\n");
+			if (svd_amandes > 0)
+				printf("les produits les plus vendus sont les amandes, le miel d'orangier et le miel de citronnier\n");
+			else
+				printf("il n'y a pas eu de vente de meils et d'amandes pour l'instant :(");
 		else
 			printf("les produits les plus vendus sont les amandes et le miel de citronnier\n");
 	else if (svd_amandes == svd_miel_orange)
