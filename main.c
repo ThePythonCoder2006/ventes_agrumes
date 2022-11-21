@@ -410,7 +410,7 @@ void stats(void)
 			if (svd_amandes > 0)
 				printf("les produits les plus vendus sont les amandes, le miel d'orangier et le miel de citronnier\n");
 			else
-				printf("il n'y a pas eu de vente de meils et d'amandes pour l'instant :(");
+				printf("il n'y a pas eu de vente de meils et d'amandes pour l'instant :(\n");
 		else
 			printf("les produits les plus vendus sont les amandes et le miel de citronnier\n");
 	else if (svd_amandes == svd_miel_orange)
@@ -419,11 +419,11 @@ void stats(void)
 	else if (svd_miel_citron > svd_miel_orange)
 		printf("le produit le plus vendu est le miel de citronnier\n");
 	else if (svd_miel_citron == svd_miel_orange)
-		printf("les produits les plus vendus sont le miel d'orangier et le miel de citronnier");
+		printf("les produits les plus vendus sont le miel d'orangier et le miel de citronnier\n");
 	else if (svd_miel_orange > svd_miel_citron)
-		printf("le produit le plus vendu est le miel d'orangier");
+		printf("le produit le plus vendu est le miel d'orangier\n");
 	else
-		printf("[ERROR] unreachable path");
+		printf("[ERROR] unreachable path\n");
 
 	printf("appuyer sur [enter] pour continuer...");
 	scanf("%*c"); // attendre que l'utilisateur ait lu les donnees
@@ -477,24 +477,29 @@ void stats(void)
 		}
 	}
 
-	cagette high_cagette[NB_TYPE_CAGETTES];
-	uint8_t max_high_cagette = 0;
-
-	for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
-	{
-		if (high[i])
-			high_cagette[max_high_cagette++] = i;
-	}
-
-	if (max_high_cagette > 1)
-	{
-		printf("les produits les plus vendus sont la cagette d%s%s", cagette_names[high_cagette[0]][0] == 'o' ? "'" : "e ", cagette_names[high_cagette[0]]);
-		for (uint8_t i = 1; i < max_high_cagette - 1; ++i)
-			printf(", la cagette d%s%s", cagette_names[high_cagette[i]][0] == 'o' ? "'" : "e ", cagette_names[high_cagette[i]]);
-		printf(" et la cagette de %s\n", cagette_names[high_cagette[max_high_cagette - 1]]);
-	}
+	if (max == 0)
+		printf("il n'y a pas encore eu de vente d'agrumes pour l'instant :(\n");
 	else
-		printf("le produit le plus vendu est la cagette de %s\n", cagette_names[high_cagette[0]]);
+	{
+		cagette high_cagette[NB_TYPE_CAGETTES];
+		uint8_t max_high_cagette = 0;
+
+		for (uint8_t i = 0; i < NB_TYPE_CAGETTES; ++i)
+		{
+			if (high[i])
+				high_cagette[max_high_cagette++] = i;
+		}
+
+		if (max_high_cagette > 1)
+		{
+			printf("les produits les plus vendus sont la cagette d%s%s", cagette_names[high_cagette[0]][0] == 'o' ? "'" : "e ", cagette_names[high_cagette[0]]);
+			for (uint8_t i = 1; i < max_high_cagette - 1; ++i)
+				printf(", la cagette d%s%s", cagette_names[high_cagette[i]][0] == 'o' ? "'" : "e ", cagette_names[high_cagette[i]]);
+			printf(" et la cagette de %s\n", cagette_names[high_cagette[max_high_cagette - 1]]);
+		}
+		else
+			printf("le produit le plus vendu est la cagette de %s\n", cagette_names[high_cagette[0]]);
+	}
 
 	printf("appuyer sur [enter] pour revenir au menu principal...");
 	scanf("%*c"); // attendre que l'utilisateur ait lu les donnees
